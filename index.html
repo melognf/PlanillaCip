@@ -1,0 +1,488 @@
+<title>Tiempos de CIP · Línea 3 / Línea 7</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --paper: #f2f5f4;
+    --paper-raised: #ffffff;
+    --ink: #14262c;
+    --ink-dim: #4b6169;
+    --line: #d7e0de;
+    --teal: #146b7a;
+    --teal-ink: #0a3540;
+    --teal-tint: #e2eef0;
+    --amber: #b8632a;
+    --amber-ink: #6e3714;
+    --amber-tint: #fbeadd;
+    --cyan: #2f8fae;
+    --cyan-ink: #164a5c;
+    --cyan-tint: #e4f2f7;
+    --band-dark: #0e2841;
+    --band-dark-ink: #ffffff;
+    --shadow: 0 1px 2px rgba(14,40,49,0.06), 0 6px 20px -8px rgba(14,40,49,0.18);
+    --radius: 14px;
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Roboto Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper: #0f1a1d;
+      --paper-raised: #16262b;
+      --ink: #e9f1f0;
+      --ink-dim: #9fb3b8;
+      --line: #253a40;
+      --teal-tint: #10333a;
+      --teal-ink: #bfe4ea;
+      --amber-tint: #3a2818;
+      --amber-ink: #f2c9a4;
+      --cyan-tint: #0f3542;
+      --cyan-ink: #b6e4f2;
+      --band-dark: #0a1620;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #0f1a1d; --paper-raised: #16262b; --ink: #e9f1f0; --ink-dim: #9fb3b8; --line: #253a40;
+    --teal-tint: #10333a; --teal-ink: #bfe4ea; --amber-tint: #3a2818; --amber-ink: #f2c9a4;
+    --cyan-tint: #0f3542; --cyan-ink: #b6e4f2; --band-dark: #0a1620;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.6);
+  }
+  :root[data-theme="light"]{
+    --paper: #f2f5f4; --paper-raised: #ffffff; --ink: #14262c; --ink-dim: #4b6169; --line: #d7e0de;
+    --teal-tint: #e2eef0; --teal-ink: #0a3540; --amber-tint: #fbeadd; --amber-ink: #6e3714;
+    --cyan-tint: #e4f2f7; --cyan-ink: #164a5c; --band-dark: #0e2841;
+    --shadow: 0 1px 2px rgba(14,40,49,0.06), 0 6px 20px -8px rgba(14,40,49,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 92px;
+  }
+
+  .topbar{
+    position: sticky; top: 0; z-index: 20;
+    background: var(--band-dark);
+    color: #fff;
+    padding: 14px 16px 12px;
+    box-shadow: var(--shadow);
+  }
+  .topbar h1{
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #cfe3e8;
+    text-wrap: balance;
+  }
+  .switcher{
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .switcher button{
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.65);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 9px 8px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .switcher button.active{
+    background: #fff;
+    color: var(--band-dark);
+  }
+  .switcher button:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+
+  main{ max-width: 620px; margin: 0 auto; padding: 16px; }
+
+  .linea{ display: none; }
+  .linea.active{ display: block; }
+
+  .banner{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .banner .badge{
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--band-dark);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 800;
+    flex: none;
+  }
+  .banner .titles{ min-width: 0; }
+  .banner h2{
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .banner .sub{ margin: 2px 0 0; font-size: 13px; color: var(--ink-dim); }
+
+  .card{
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    background: var(--paper-raised);
+  }
+  .card-head{
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .card.teal .card-head{ background: var(--teal); color: #fff; }
+  .card.amber .card-head{ background: var(--amber); color: #fff; }
+  .card.cyan .card-head{ background: var(--cyan); color: #fff; }
+
+  .field-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .card.teal .field-row{ background: var(--teal-tint); }
+  .card.amber .field-row{ background: var(--amber-tint); }
+  .card.cyan .field-row{ background: var(--cyan-tint); }
+  .field-row:first-child{ border-top: none; }
+
+  .field-row label{
+    flex: 1 1 46%;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .card.teal .field-row label{ color: var(--teal-ink); }
+  .card.amber .field-row label{ color: var(--amber-ink); }
+  .card.cyan .field-row label{ color: var(--cyan-ink); }
+
+  .step-row label{ display: flex; gap: 8px; align-items: baseline; }
+  .step-row .n{ font-family: var(--font-mono); font-size: 11px; opacity: 0.6; flex: none; }
+
+  input[type="text"], input[type="date"], input[type="time"], textarea, select{
+    font-family: var(--font-ui);
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 9px;
+    width: 100%;
+    min-width: 0;
+  }
+  input[type="time"]{
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    flex: 1 1 auto;
+  }
+  .time-wrap{ display: flex; gap: 8px; flex: 1 1 54%; min-width: 0; }
+  .now-btn{
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink-dim);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+  .now-btn:active{ background: var(--teal); color: #fff; border-color: var(--teal); }
+
+  .obs-row{ display: block; }
+  .obs-row label{ display: block; margin-bottom: 8px; }
+  .obs-row textarea{ min-height: 90px; resize: vertical; }
+
+  .actionbar{
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: var(--paper-raised);
+    border-top: 1px solid var(--line);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    display: flex; gap: 10px; align-items: center;
+    box-shadow: 0 -6px 20px -10px rgba(14,40,49,0.25);
+  }
+  .actionbar .status{
+    flex: 1 1 auto; min-width: 0;
+    font-size: 12px; color: var(--ink-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .btn{
+    flex: none;
+    border: none; border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 14px; font-weight: 700;
+    font-family: var(--font-ui);
+    cursor: pointer;
+  }
+  .btn.primary{ background: var(--teal); color: #fff; }
+  .btn.ghost{ background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
+
+  .hint{
+    max-width: 620px; margin: 0 auto 14px; padding: 0 16px;
+    font-size: 12.5px; color: var(--ink-dim); text-wrap: balance;
+  }
+
+  /* ---- Print / PDF ---- */
+  @media print{
+    body{ padding-bottom: 0; background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .topbar, .actionbar, .hint, .now-btn{ display: none !important; }
+    main{ max-width: none; padding: 0; }
+    .linea{ display: none !important; }
+    .linea.active{ display: block !important; }
+    .card, .banner{ box-shadow: none; break-inside: avoid; }
+    input, textarea{ border-color: #bbb !important; }
+  }
+</style>
+
+<div class="topbar">
+  <h1>Tiempos de arranque · CIP</h1>
+  <div class="switcher" role="tablist" aria-label="Elegir línea">
+    <button type="button" id="tab-3" class="active" role="tab" aria-selected="true">Línea 3</button>
+    <button type="button" id="tab-7" role="tab" aria-selected="false">Línea 7</button>
+  </div>
+</div>
+
+<main id="lineas"></main>
+
+<p class="hint" id="hint">Los datos se guardan solos en este celular. Para mandarlo por WhatsApp: tocá "Generar PDF", elegí "Guardar como PDF" y compartilo desde tus archivos.</p>
+
+<div class="actionbar">
+  <span class="status" id="status">Sin cambios guardados</span>
+  <button type="button" class="btn ghost" id="btn-clear">Limpiar</button>
+  <button type="button" class="btn primary" id="btn-pdf">Generar PDF</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GENERAL_FIELDS = [
+    { key: "fecha", label: "FECHA CIP", type: "date" },
+    { key: "tipo", label: "TIPO DE CIP", type: "text" },
+    { key: "turno", label: "TURNO", type: "text" },
+    { key: "sku_salida", label: "SKU SALIDA / SABOR SALIDA", type: "text" },
+    { key: "sku_entrada", label: "SKU ENTRADA / SABOR ENTRADA", type: "text" }
+  ];
+
+  var STEPS_3 = [
+    "ULTIMA BOTELLA", "FIN ESPUMADO/ENJUAGUE", "INICIO CAMBIO FORMATO", "FIN CAMBIO FORMATO",
+    "COLOCACIÓN FALSAS BOTELLAS", "PEDIDO CIP", "INICIO CIP", "AVISO FIN CIP", "PEDIDO HISOPADO",
+    "ANÁLISIS HISOPADO", "OK ANÁLISIS HISOPADO", "SACAR FALSAS BOTELLAS", "PEDIDO DE CARGAS",
+    "INICIO CARGAS", "FIN PRIMERA CARGA CARBO", "PRIMER ANÁLISIS", "AJUSTE DE CARGA", "OK BEBIDA",
+    "INICIO ENVASADO"
+  ];
+
+  var STEPS_7 = [
+    "ULTIMA BOTELLA", "FIN ESPUMADO/ENJUAGUE", "INICIO CAMBIO FORMATO", "FIN CAMBIO FORMATO",
+    "COLOCACIÓN FALSAS BOTELLAS", "PEDIDO CIP", "INICIO CIP", "AVISO FIN CIP", "PEDIDO HISOPADO",
+    "ANÁLISIS HISOPADO", "OK ANÁLISIS HISOPADO", "SACAR FALSAS BOTELLAS/INICIO BARRIDO",
+    "FIN BARRIDO/PEDIDO DE JARABE", "ENVÍO JARABE", "PEDIDO ANÁLISIS", "PRIMER ANÁLISIS",
+    "AJUSTE DE JARABE", "OK BEBIDA", "INICIO ENVASADO"
+  ];
+
+  var LINEAS = [
+    { id: "3", titulo: "LINEA 3", steps: STEPS_3 },
+    { id: "7", titulo: "LINEA 7", steps: STEPS_7 }
+  ];
+
+  var STORAGE_PREFIX = "cip_tiempos_linea_";
+
+  function el(tag, attrs, children){
+    var node = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else node.setAttribute(k, attrs[k]);
+    }
+    if (children) children.forEach(function(c){ if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function fieldRow(key, label, type){
+    var row = el("div", { class: "field-row" });
+    var lab = el("label", { for: key, text: label });
+    row.appendChild(lab);
+    var input = el("input", { type: type, id: key, name: key, autocomplete: "off" });
+    row.appendChild(input);
+    return row;
+  }
+
+  function stepRow(lineaId, index, label){
+    var key = "step_" + lineaId + "_" + index;
+    var row = el("div", { class: "field-row step-row" });
+    var lab = el("label", { for: key });
+    lab.appendChild(el("span", { class: "n", text: (index + 1) + "." }));
+    lab.appendChild(el("span", { text: label }));
+    row.appendChild(lab);
+    var wrap = el("div", { class: "time-wrap" });
+    var input = el("input", { type: "time", id: key, name: key });
+    var nowBtn = el("button", { type: "button", class: "now-btn", text: "Ahora" });
+    nowBtn.addEventListener("click", function(){
+      var d = new Date();
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      input.value = hh + ":" + mm;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    wrap.appendChild(input);
+    wrap.appendChild(nowBtn);
+    row.appendChild(wrap);
+    return row;
+  }
+
+  function buildLinea(linea){
+    var section = el("section", { class: "linea", id: "linea-" + linea.id });
+
+    var banner = el("div", { class: "banner" }, [
+      el("div", { class: "badge", text: linea.id }),
+      el("div", { class: "titles" }, [
+        el("h2", { text: linea.titulo }),
+        el("p", { class: "sub", text: "Registro de horarios de arranque" })
+      ])
+    ]);
+    section.appendChild(banner);
+
+    var general = el("div", { class: "card teal" });
+    general.appendChild(el("div", { class: "card-head", text: "Datos generales" }));
+    GENERAL_FIELDS.forEach(function(f){
+      general.appendChild(fieldRow("l" + linea.id + "_" + f.key, f.label, f.type));
+    });
+    section.appendChild(general);
+
+    var pasos = el("div", { class: "card amber" });
+    pasos.appendChild(el("div", { class: "card-head", text: "Acción / Operación" }));
+    linea.steps.forEach(function(label, i){
+      pasos.appendChild(stepRow(linea.id, i, label));
+    });
+    section.appendChild(pasos);
+
+    var obs = el("div", { class: "card cyan" });
+    obs.appendChild(el("div", { class: "card-head", text: "Observación / Comentario" }));
+    var obsRow = el("div", { class: "field-row obs-row" });
+    var obsKey = "l" + linea.id + "_obs";
+    obsRow.appendChild(el("label", { for: obsKey, text: "Notas del arranque" }));
+    obsRow.appendChild(el("textarea", { id: obsKey, name: obsKey, rows: "4" }));
+    obs.appendChild(obsRow);
+    section.appendChild(obs);
+
+    return section;
+  }
+
+  var root = document.getElementById("lineas");
+  LINEAS.forEach(function(linea){ root.appendChild(buildLinea(linea)); });
+  document.getElementById("linea-3").classList.add("active");
+
+  function storageKey(id){ return STORAGE_PREFIX + id; }
+
+  function collect(id){
+    var section = document.getElementById("linea-" + id);
+    var data = {};
+    section.querySelectorAll("input, textarea").forEach(function(input){
+      data[input.id] = input.value;
+    });
+    return data;
+  }
+
+  function fill(id, data){
+    var section = document.getElementById("linea-" + id);
+    section.querySelectorAll("input, textarea").forEach(function(input){
+      if (data && Object.prototype.hasOwnProperty.call(data, input.id)) {
+        input.value = data[input.id];
+      }
+    });
+  }
+
+  function load(id){
+    try {
+      var raw = localStorage.getItem(storageKey(id));
+      if (raw) fill(id, JSON.parse(raw));
+    } catch (e) { /* localStorage no disponible: se sigue sin persistencia */ }
+  }
+
+  var statusEl = document.getElementById("status");
+  var saveTimer = null;
+
+  function save(id){
+    try {
+      localStorage.setItem(storageKey(id), JSON.stringify(collect(id)));
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2, "0");
+      var mm = String(now.getMinutes()).padStart(2, "0");
+      statusEl.textContent = "Guardado a las " + hh + ":" + mm;
+    } catch (e) {
+      statusEl.textContent = "No se pudo guardar en este celular";
+    }
+  }
+
+  LINEAS.forEach(function(linea){ load(linea.id); });
+
+  root.addEventListener("input", function(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ save(activeId()); }, 400);
+  });
+
+  function activeId(){
+    return document.querySelector(".linea.active").id.replace("linea-", "");
+  }
+
+  var tab3 = document.getElementById("tab-3");
+  var tab7 = document.getElementById("tab-7");
+
+  function setActive(id){
+    LINEAS.forEach(function(linea){
+      document.getElementById("linea-" + linea.id).classList.toggle("active", linea.id === id);
+    });
+    tab3.classList.toggle("active", id === "3");
+    tab7.classList.toggle("active", id === "7");
+    tab3.setAttribute("aria-selected", id === "3" ? "true" : "false");
+    tab7.setAttribute("aria-selected", id === "7" ? "true" : "false");
+  }
+
+  tab3.addEventListener("click", function(){ setActive("3"); });
+  tab7.addEventListener("click", function(){ setActive("7"); });
+
+  document.getElementById("btn-pdf").addEventListener("click", function(){
+    save(activeId());
+    window.print();
+  });
+
+  document.getElementById("btn-clear").addEventListener("click", function(){
+    var id = activeId();
+    if (!confirm("¿Borrar todos los datos cargados de Línea " + id + " en este celular?")) return;
+    fill(id, {});
+    document.getElementById("linea-" + id).querySelectorAll("input, textarea").forEach(function(i){ i.value = ""; });
+    try { localStorage.removeItem(storageKey(id)); } catch (e) {}
+    statusEl.textContent = "Formulario de Línea " + id + " vaciado";
+  });
+})();
+</script>
