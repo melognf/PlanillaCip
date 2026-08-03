@@ -251,7 +251,7 @@
 
 <main id="lineas"></main>
 
-<p class="hint" id="hint">Los datos se guardan solos en este celular. Para mandarlo por WhatsApp: tocá "Generar PDF", elegí "Guardar como PDF" y compartilo desde tus archivos.</p>
+<p class="hint" id="hint">Los datos se guardan solos en este celular. Tocá "Generar PDF" para elegir directo por dónde compartirlo (WhatsApp, etc.). Si tu navegador no permite compartir archivos, el PDF se descarga para que lo mandes desde tus archivos.</p>
 
 <div class="actionbar">
   <span class="status" id="status">Sin cambios guardados</span>
@@ -448,9 +448,196 @@
   tab3.addEventListener("click", function(){ setActive("3"); });
   tab7.addEventListener("click", function(){ setActive("7"); });
 
-  document.getElementById("btn-pdf").addEventListener("click", function(){
-    save(activeId());
-    window.print();
+  // ---- Generación de PDF (sin librerías externas) para compartir por WhatsApp ----
+
+  var PDF_COLORS = {
+    band: [10, 22, 32], white: [255, 255, 255],
+    teal: [20, 107, 122], tealTint: [16, 51, 58], tealInk: [191, 228, 234],
+    amber: [184, 99, 42], amberTint: [58, 40, 24], amberInk: [242, 201, 164],
+    cyan: [47, 143, 174], cyanTint: [15, 53, 66], cyanInk: [182, 228, 242],
+    ink: [233, 241, 240], inkDim: [186, 204, 208]
+  };
+
+  function toLatin1(s){
+    var out = "";
+    s = String(s == null ? "" : s);
+    for (var i = 0; i < s.length; i++) {
+      var code = s.codePointAt(i);
+      out += code <= 255 ? s[i] : "?";
+    }
+    return out;
+  }
+
+  function escPdfText(s){
+    return toLatin1(s).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  }
+
+  var measureCanvas = document.createElement("canvas");
+  var measureCtx = measureCanvas.getContext("2d");
+  function textWidth(str, size, bold){
+    measureCtx.font = (bold ? "bold " : "") + size + "px Arial";
+    return measureCtx.measureText(str).width;
+  }
+  function wrapText(str, maxWidth, size, bold){
+    var paragraphs = toLatin1(str).split(/\r?\n/);
+    var lines = [];
+    paragraphs.forEach(function(p){
+      if (p === "") { lines.push(""); return; }
+      var words = p.split(/\s+/);
+      var cur = "";
+      words.forEach(function(w){
+        var test = cur ? cur + " " + w : w;
+        if (cur && textWidth(test, size, bold) > maxWidth) { lines.push(cur); cur = w; }
+        else { cur = test; }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function gatherPdfData(linea){
+    var general = {};
+    GENERAL_FIELDS.forEach(function(f){
+      var input = document.getElementById("l" + linea.id + "_" + f.key);
+      var v = input ? input.value : "";
+      if (f.type === "date" && v) {
+        var parts = v.split("-");
+        v = parts[2] + "/" + parts[1] + "/" + parts[0];
+      }
+      general[f.key] = v;
+    });
+    var steps = linea.steps.map(function(label, i){
+      var input = document.getElementById("step_" + linea.id + "_" + i);
+      return input ? input.value : "";
+    });
+    var obsInput = document.getElementById("l" + linea.id + "_obs");
+    return { general: general, steps: steps, obs: obsInput ? obsInput.value : "" };
+  }
+
+  function buildPdfBytes(linea, data){
+    var W = 595.28, H = 841.89, margin = 40;
+    var contentW = W - margin * 2;
+    var y = H - margin;
+    var ops = [];
+
+    function setFill(c){ ops.push((c[0]/255).toFixed(3) + " " + (c[1]/255).toFixed(3) + " " + (c[2]/255).toFixed(3) + " rg"); }
+    function rect(x, ry, w, h){ ops.push(x.toFixed(2) + " " + ry.toFixed(2) + " " + w.toFixed(2) + " " + h.toFixed(2) + " re f"); }
+    function text(x, ty, str, font, size, color){
+      setFill(color);
+      ops.push("BT");
+      ops.push("/" + font + " " + size + " Tf");
+      ops.push(x.toFixed(2) + " " + ty.toFixed(2) + " Td");
+      ops.push("(" + escPdfText(str) + ") Tj");
+      ops.push("ET");
+    }
+
+    var bannerH = 54;
+    y -= bannerH;
+    setFill(PDF_COLORS.band); rect(margin, y, contentW, bannerH);
+    text(margin + 16, y + bannerH - 26, "LINEA " + linea.id, "F2", 20, PDF_COLORS.white);
+    text(margin + 16, y + bannerH - 42, "Registro de horarios de arranque", "F1", 10, PDF_COLORS.inkDim);
+    y -= 10;
+
+    var headH = 20, rowH = 20;
+    setFill(PDF_COLORS.teal); rect(margin, y - headH, contentW, headH);
+    text(margin + 10, y - headH + 6, "DATOS GENERALES", "F2", 10, PDF_COLORS.white);
+    y -= headH;
+    GENERAL_FIELDS.forEach(function(f){
+      y -= rowH;
+      setFill(PDF_COLORS.tealTint); rect(margin, y, contentW, rowH);
+      text(margin + 10, y + 6, f.label, "F2", 9, PDF_COLORS.tealInk);
+      text(margin + 240, y + 6, data.general[f.key] || "", "F1", 9, PDF_COLORS.ink);
+    });
+    y -= 8;
+
+    setFill(PDF_COLORS.amber); rect(margin, y - headH, contentW, headH);
+    text(margin + 10, y - headH + 6, "ACCION / OPERACION", "F2", 10, PDF_COLORS.white);
+    y -= headH;
+    var stepRowH = 14.3;
+    linea.steps.forEach(function(label, i){
+      y -= stepRowH;
+      setFill(PDF_COLORS.amberTint); rect(margin, y, contentW, stepRowH);
+      text(margin + 8, y + 4, (i + 1) + ". " + label, "F1", 8.3, PDF_COLORS.amberInk);
+      text(margin + 400, y + 4, data.steps[i] || "", "F2", 8.3, PDF_COLORS.white);
+    });
+    y -= 8;
+
+    setFill(PDF_COLORS.cyan); rect(margin, y - headH, contentW, headH);
+    text(margin + 10, y - headH + 6, "OBSERVACION / COMENTARIO", "F2", 10, PDF_COLORS.white);
+    y -= headH;
+    var obsLinesAll = wrapText(data.obs, contentW - 20, 9, false);
+    var maxLines = Math.max(1, Math.floor((y - margin - 14) / 12));
+    var obsLines = obsLinesAll.slice(0, maxLines);
+    if (obsLinesAll.length > obsLines.length && obsLines.length > 0) {
+      obsLines[obsLines.length - 1] = obsLines[obsLines.length - 1] + " (...)";
+    }
+    var obsBoxH = Math.max(24, obsLines.length * 12 + 12);
+    setFill(PDF_COLORS.cyanTint); rect(margin, y - obsBoxH, contentW, obsBoxH);
+    obsLines.forEach(function(line, i){
+      text(margin + 10, y - 16 - i * 12, line, "F1", 9, PDF_COLORS.cyanInk);
+    });
+
+    var contentStr = ops.join("\n");
+
+    var objs = [];
+    objs.push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+    objs.push("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+    objs.push("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + W + " " + H + "] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>\nendobj\n");
+    objs.push("4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n");
+    objs.push("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n");
+    objs.push("6 0 obj\n<< /Length " + contentStr.length + " >>\nstream\n" + contentStr + "\nendstream\nendobj\n");
+
+    var body = "%PDF-1.4\n";
+    var offsets = [0];
+    objs.forEach(function(o){ offsets.push(body.length); body += o; });
+    var xrefStart = body.length;
+    var xref = "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n";
+    for (var i = 1; i <= objs.length; i++) {
+      xref += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+    }
+    var trailer = "trailer\n<< /Size " + (objs.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xrefStart + "\n%%EOF";
+    var pdfStr = body + xref + trailer;
+
+    var bytes = new Uint8Array(pdfStr.length);
+    for (var j = 0; j < pdfStr.length; j++) bytes[j] = pdfStr.charCodeAt(j) & 0xFF;
+    return bytes;
+  }
+
+  function dateStamp(){
+    var d = new Date();
+    return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0")
+      + "-" + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
+  }
+
+  document.getElementById("btn-pdf").addEventListener("click", async function(){
+    var id = activeId();
+    save(id);
+    var linea = LINEAS.filter(function(l){ return l.id === id; })[0];
+    var data = gatherPdfData(linea);
+    var bytes = buildPdfBytes(linea, data);
+    var filename = "tiempos-cip-linea-" + id + "-" + dateStamp() + ".pdf";
+    var blob = new Blob([bytes], { type: "application/pdf" });
+
+    if (navigator.canShare && window.File) {
+      try {
+        var file = new File([blob], filename, { type: "application/pdf" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: "Tiempos CIP Línea " + id });
+          statusEl.textContent = "PDF compartido";
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") { statusEl.textContent = "Compartir cancelado"; return; }
+        // si falla compartir, seguimos con la descarga de abajo
+      }
+    }
+
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    statusEl.textContent = "PDF descargado — compartilo desde tus archivos";
   });
 
   document.getElementById("btn-clear").addEventListener("click", function(){
