@@ -516,7 +516,7 @@
 
   function buildPdfBytes(linea, data){
     var W = 595.28, H = 841.89, margin = 40;
-    var contentW = W - margin * 2;
+    var maxContentW = W - margin * 2;
     var y = H - margin;
     var ops = [];
 
@@ -531,48 +531,81 @@
       ops.push("ET");
     }
 
+    // Ancho de tabla ajustado al contenido real, para que la hora quede
+    // pegada al paso en vez de saltar al borde de la hoja.
+    var stepsPad = 8, stepsGap = 14;
+    var timeColW = Math.max(textWidth("00:00", 8.3, true) + 4, 34);
+    var maxStepLabelW = 0;
+    linea.steps.forEach(function(label, i){
+      var w = textWidth((i + 1) + ". " + label, 8.3, false);
+      if (w > maxStepLabelW) maxStepLabelW = w;
+    });
+    var stepsWidth = stepsPad + maxStepLabelW + stepsGap + timeColW + stepsPad;
+
+    var genPad = 10, genGap = 16;
+    var maxGenLabelW = 0, maxGenValueW = 0;
+    GENERAL_FIELDS.forEach(function(f){
+      var lw = textWidth(f.label, 9, true);
+      if (lw > maxGenLabelW) maxGenLabelW = lw;
+      var vw = textWidth(data.general[f.key] || "", 9, false);
+      if (vw > maxGenValueW) maxGenValueW = vw;
+    });
+    maxGenValueW = Math.max(maxGenValueW, 70);
+    var generalWidth = genPad + maxGenLabelW + genGap + maxGenValueW + genPad;
+
+    var bannerTextW = Math.max(
+      textWidth("LINEA " + linea.id, 20, true),
+      textWidth("Registro de horarios de arranque", 10, false)
+    ) + 32;
+
+    var tableW = Math.max(stepsWidth, generalWidth, bannerTextW, 260);
+    tableW = Math.min(tableW, maxContentW);
+
+    var genValueX = margin + genPad + maxGenLabelW + genGap;
+    var stepValueX = margin + stepsPad + maxStepLabelW + stepsGap;
+
     var bannerH = 54;
     y -= bannerH;
-    setFill(PDF_COLORS.band); rect(margin, y, contentW, bannerH);
+    setFill(PDF_COLORS.band); rect(margin, y, tableW, bannerH);
     text(margin + 16, y + bannerH - 26, "LINEA " + linea.id, "F2", 20, PDF_COLORS.white);
     text(margin + 16, y + bannerH - 42, "Registro de horarios de arranque", "F1", 10, PDF_COLORS.inkDim);
     y -= 10;
 
     var headH = 20, rowH = 20;
-    setFill(PDF_COLORS.teal); rect(margin, y - headH, contentW, headH);
+    setFill(PDF_COLORS.teal); rect(margin, y - headH, tableW, headH);
     text(margin + 10, y - headH + 6, "DATOS GENERALES", "F2", 10, PDF_COLORS.white);
     y -= headH;
     GENERAL_FIELDS.forEach(function(f){
       y -= rowH;
-      setFill(PDF_COLORS.tealTint); rect(margin, y, contentW, rowH);
-      text(margin + 10, y + 6, f.label, "F2", 9, PDF_COLORS.tealInk);
-      text(margin + 240, y + 6, data.general[f.key] || "", "F1", 9, PDF_COLORS.ink);
+      setFill(PDF_COLORS.tealTint); rect(margin, y, tableW, rowH);
+      text(margin + genPad, y + 6, f.label, "F2", 9, PDF_COLORS.tealInk);
+      text(genValueX, y + 6, data.general[f.key] || "", "F1", 9, PDF_COLORS.ink);
     });
     y -= 8;
 
-    setFill(PDF_COLORS.amber); rect(margin, y - headH, contentW, headH);
+    setFill(PDF_COLORS.amber); rect(margin, y - headH, tableW, headH);
     text(margin + 10, y - headH + 6, "ACCION / OPERACION", "F2", 10, PDF_COLORS.white);
     y -= headH;
     var stepRowH = 14.3;
     linea.steps.forEach(function(label, i){
       y -= stepRowH;
-      setFill(PDF_COLORS.amberTint); rect(margin, y, contentW, stepRowH);
-      text(margin + 8, y + 4, (i + 1) + ". " + label, "F1", 8.3, PDF_COLORS.amberInk);
-      text(margin + 400, y + 4, data.steps[i] || "", "F2", 8.3, PDF_COLORS.white);
+      setFill(PDF_COLORS.amberTint); rect(margin, y, tableW, stepRowH);
+      text(margin + stepsPad, y + 4, (i + 1) + ". " + label, "F1", 8.3, PDF_COLORS.amberInk);
+      text(stepValueX, y + 4, data.steps[i] || "", "F2", 8.3, PDF_COLORS.white);
     });
     y -= 8;
 
-    setFill(PDF_COLORS.cyan); rect(margin, y - headH, contentW, headH);
+    setFill(PDF_COLORS.cyan); rect(margin, y - headH, tableW, headH);
     text(margin + 10, y - headH + 6, "OBSERVACION / COMENTARIO", "F2", 10, PDF_COLORS.white);
     y -= headH;
-    var obsLinesAll = wrapText(data.obs, contentW - 20, 9, false);
+    var obsLinesAll = wrapText(data.obs, tableW - 20, 9, false);
     var maxLines = Math.max(1, Math.floor((y - margin - 14) / 12));
     var obsLines = obsLinesAll.slice(0, maxLines);
     if (obsLinesAll.length > obsLines.length && obsLines.length > 0) {
       obsLines[obsLines.length - 1] = obsLines[obsLines.length - 1] + " (...)";
     }
     var obsBoxH = Math.max(24, obsLines.length * 12 + 12);
-    setFill(PDF_COLORS.cyanTint); rect(margin, y - obsBoxH, contentW, obsBoxH);
+    setFill(PDF_COLORS.cyanTint); rect(margin, y - obsBoxH, tableW, obsBoxH);
     obsLines.forEach(function(line, i){
       text(margin + 10, y - 16 - i * 12, line, "F1", 9, PDF_COLORS.cyanInk);
     });
